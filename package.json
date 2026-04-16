@@ -1,5 +1,5 @@
 {
-  "name": "paperclip-plugin-workflow-studio",
+  "name": "@vlbog/paperclip-plugin-workflow-studio",
   "version": "0.1.0",
   "type": "module",
   "private": false,

@@ -21,7 +21,7 @@ npx @paperclipai/create-paperclip-plugin@2026.416.0 my-plugin
 The package name for Plugin Manager install is:
 
 ```bash
-paperclip-plugin-workflow-studio
+@vlbog/paperclip-plugin-workflow-studio
 ```
 
 Publish flow:
@@ -81,7 +81,7 @@ After installation, open the active company in Paperclip and launch `Workflow St
 In Paperclip `Plugin Manager -> Install Plugin`, enter:
 
 ```text
-paperclip-plugin-workflow-studio
+@vlbog/paperclip-plugin-workflow-studio
 ```
 
 You can also install a specific published version through the API:
@@ -89,7 +89,7 @@ You can also install a specific published version through the API:
 ```bash
 curl -X POST http://127.0.0.1:3100/api/plugins/install \
   -H "Content-Type: application/json" \
-  -d '{"packageName":"paperclip-plugin-workflow-studio","version":"0.1.0"}'
+  -d '{"packageName":"@vlbog/paperclip-plugin-workflow-studio","version":"0.1.0"}'
 ```
 
 ## Manual Smoke Test
