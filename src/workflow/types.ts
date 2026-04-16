@@ -1,5 +1,5 @@
 export const PAPERCLIP_OFFICIAL_MASTER_COMMIT = "1afb6be961550694ca9d537cc97a27306950edab";
-export const PAPERCLIP_MINIMUM_STABLE_VERSION = "v2026.416.0";
+export const PAPERCLIP_MINIMUM_STABLE_VERSION = "2026.416.0";
 export const PAPERCLIP_MINIMUM_STABLE_COMMIT = "b8725c52eff66cdea8cb223f1ca885475a254468";
 export const WORKFLOW_SCHEMA_VERSION = "paperclip-workflow-studio/v1";
 export const WORKFLOW_COMPILER_VERSION = "paperclip-workflow-studio-compiler/v1";

@@ -89,7 +89,7 @@ You can also install a specific published version through the API:
 ```bash
 curl -X POST http://127.0.0.1:3100/api/plugins/install \
   -H "Content-Type: application/json" \
-  -d '{"packageName":"@vlbog/paperclip-plugin-workflow-studio","version":"0.1.0"}'
+  -d '{"packageName":"@vlbog/paperclip-plugin-workflow-studio","version":"0.1.1"}'
 ```
 
 ## Manual Smoke Test
