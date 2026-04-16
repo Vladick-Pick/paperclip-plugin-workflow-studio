@@ -1,13 +1,11 @@
 export const PAPERCLIP_OFFICIAL_MASTER_COMMIT = "1afb6be961550694ca9d537cc97a27306950edab";
 export const PAPERCLIP_MINIMUM_STABLE_VERSION = "v2026.416.0";
 export const PAPERCLIP_MINIMUM_STABLE_COMMIT = "b8725c52eff66cdea8cb223f1ca885475a254468";
-export const SOURCE_SCHEMA_COMMIT = "a9cdf0d24d062d7cf4b4958fc0b9e6e093da4018";
-export const SOURCE_SCHEMA_VERSION = "1.0.0";
 export const WORKFLOW_SCHEMA_VERSION = "paperclip-workflow-studio/v1";
 export const WORKFLOW_COMPILER_VERSION = "paperclip-workflow-studio-compiler/v1";
 export const WORKFLOW_MAX_NODES = 100;
 
-export const SOURCE_NODE_TYPES = [
+export const WORKFLOW_NODE_TYPES = [
   "start",
   "end",
   "prompt",
@@ -22,7 +20,7 @@ export const SOURCE_NODE_TYPES = [
   "group",
 ] as const;
 
-export type WorkflowNodeType = (typeof SOURCE_NODE_TYPES)[number];
+export type WorkflowNodeType = (typeof WORKFLOW_NODE_TYPES)[number];
 
 export type PublishStateStatus =
   | "unpublished"
@@ -74,7 +72,6 @@ export interface WorkflowDefinition {
   slug: string;
   description: string | null;
   schemaVersion: string;
-  sourceSchemaVersion: string;
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
   structuredOverrides: StructuredOverrides;
@@ -96,8 +93,6 @@ export interface SkillArtifact {
   metadata: {
     workflowId: string;
     workflowSchemaVersion: string;
-    sourceSchemaVersion: string;
-    sourceSchemaCommit: string;
     generatedHash: string;
     compilerVersion: string;
     publishedByPlugin: string;

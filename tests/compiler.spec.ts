@@ -115,8 +115,12 @@ describe("workflow compiler", () => {
     expect(artifact.skillMarkdown).toContain("Codex");
     expect(artifact.skillMarkdown).toContain("Decision package");
     expect(artifact.referenceMarkdown).toContain("# Workflow Map: Deal Desk");
-    expect(artifact.referenceMarkdown).toContain("Source schema commit");
+    expect(artifact.skillMarkdown).not.toContain("sourceSchemaVersion");
+    expect(artifact.skillMarkdown).not.toContain("sourceSchemaCommit");
+    expect(artifact.referenceMarkdown).not.toContain("Source schema");
     expect(artifact.generatedHash).toMatch(/^[a-f0-9]{64}$/);
+    expect("sourceSchemaVersion" in artifact.metadata).toBe(false);
+    expect("sourceSchemaCommit" in artifact.metadata).toBe(false);
   });
 
   it("is deterministic for preview and publish parity", () => {

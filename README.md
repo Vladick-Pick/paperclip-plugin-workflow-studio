@@ -8,6 +8,14 @@ Visual workflow editor that publishes Paperclip Company Skills
 - pnpm 9+
 - Paperclip `v2026.416.0` or newer
 
+## Scaffold a New Plugin Repo
+
+If you want to generate a fresh standalone Paperclip plugin from the official scaffolder:
+
+```bash
+npx @paperclipai/create-paperclip-plugin@2026.416.0 my-plugin
+```
+
 ## Install Dependencies
 
 ```bash

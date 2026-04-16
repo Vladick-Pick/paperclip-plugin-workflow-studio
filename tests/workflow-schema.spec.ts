@@ -1,15 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  SOURCE_NODE_TYPES,
-  SOURCE_SCHEMA_VERSION,
+  WORKFLOW_NODE_TYPES,
   createStarterWorkflow,
   validateWorkflowDefinition,
 } from "../src/workflow/index.js";
 
 describe("workflow schema", () => {
   it("matches the supported node vocabulary", () => {
-    expect(SOURCE_SCHEMA_VERSION).toBe("1.0.0");
-    expect(SOURCE_NODE_TYPES).toEqual([
+    expect(WORKFLOW_NODE_TYPES).toEqual([
       "start",
       "end",
       "prompt",
@@ -38,6 +36,7 @@ describe("workflow schema", () => {
     expect(result.valid).toBe(true);
     expect(result.errors).toEqual([]);
     expect(workflow.publishState.status).toBe("unpublished");
+    expect("sourceSchemaVersion" in workflow).toBe(false);
     expect(workflow.nodes.map((node) => node.type)).toEqual(["start", "prompt", "end"]);
   });
 

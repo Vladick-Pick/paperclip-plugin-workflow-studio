@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
 import {
-  SOURCE_SCHEMA_COMMIT,
   WORKFLOW_COMPILER_VERSION,
   type SkillArtifact,
   type WorkflowDefinition,
@@ -29,8 +28,6 @@ export function compileWorkflowToSkill(workflow: WorkflowDefinition): SkillArtif
     metadata: {
       workflowId: workflow.id,
       workflowSchemaVersion: workflow.schemaVersion,
-      sourceSchemaVersion: workflow.sourceSchemaVersion,
-      sourceSchemaCommit: SOURCE_SCHEMA_COMMIT,
       generatedHash,
       compilerVersion: WORKFLOW_COMPILER_VERSION,
       publishedByPlugin: "paperclip-plugin-workflow-studio",
@@ -81,8 +78,6 @@ function renderFrontmatter(workflow: WorkflowDefinition, generatedHash: string |
     "metadata:",
     `  workflowId: ${yamlScalar(workflow.id)}`,
     `  workflowSchemaVersion: ${yamlScalar(workflow.schemaVersion)}`,
-    `  sourceSchemaVersion: ${yamlScalar(workflow.sourceSchemaVersion)}`,
-    `  sourceSchemaCommit: ${yamlScalar(SOURCE_SCHEMA_COMMIT)}`,
     ...(generatedHash ? [`  generatedHash: ${yamlScalar(generatedHash)}`] : []),
     `  compilerVersion: ${yamlScalar(WORKFLOW_COMPILER_VERSION)}`,
     "  publishedByPlugin: paperclip-plugin-workflow-studio",
@@ -171,8 +166,6 @@ function renderReferenceMap(workflow: WorkflowDefinition, orderedNodes: Workflow
     "",
     `- Workflow ID: \`${workflow.id}\``,
     `- Workflow schema: \`${workflow.schemaVersion}\``,
-    `- Source schema: \`${workflow.sourceSchemaVersion}\``,
-    `- Source schema commit: \`${SOURCE_SCHEMA_COMMIT}\``,
     `- Compiler: \`${WORKFLOW_COMPILER_VERSION}\``,
     "",
     "## Ordered Nodes",

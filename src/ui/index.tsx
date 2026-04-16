@@ -5,7 +5,7 @@ import {
   type PluginPageProps,
 } from "@paperclipai/plugin-sdk/ui";
 import {
-  SOURCE_NODE_TYPES,
+  WORKFLOW_NODE_TYPES,
   type SkillArtifact,
   type WorkflowDefinition,
   type WorkflowEdge,
@@ -336,7 +336,7 @@ function WorkflowEditor({
             <span style={styles.panelTitle}>Graph</span>
             <select style={styles.select} onChange={(event) => addNode(event.target.value as WorkflowNodeType)} value="">
               <option value="" disabled>Add node...</option>
-              {SOURCE_NODE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+              {WORKFLOW_NODE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
             </select>
           </div>
           <div style={styles.canvas}>

@@ -43,8 +43,8 @@ The plugin UI publishes the compiler output through official Paperclip
 - `POST /api/companies/:companyId/skills`
 - `PATCH /api/companies/:companyId/skills/:skillId/files`
 
-The worker stores the resulting `companySkillId`, `generatedHash`, compiler
-version, and source provenance in the workflow publish state.
+The worker stores the resulting `companySkillId`, `generatedHash`, and compiler
+version in the workflow publish state.
 
 If a previously published `CompanySkill` no longer matches the stored generated
 hash, the workflow is marked `external_drift` and requires explicit republish.

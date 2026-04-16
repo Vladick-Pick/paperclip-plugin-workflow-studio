@@ -1,6 +1,5 @@
 import {
-  SOURCE_NODE_TYPES,
-  SOURCE_SCHEMA_VERSION,
+  WORKFLOW_NODE_TYPES,
   WORKFLOW_MAX_NODES,
   WORKFLOW_SCHEMA_VERSION,
   type WorkflowCreateInput,
@@ -9,7 +8,7 @@ import {
   type WorkflowValidationResult,
 } from "./types.js";
 
-const NODE_TYPE_SET = new Set<string>(SOURCE_NODE_TYPES);
+const NODE_TYPE_SET = new Set<string>(WORKFLOW_NODE_TYPES);
 
 export function normalizeSlug(input: string): string {
   const normalized = input
@@ -32,7 +31,6 @@ export function createStarterWorkflow(input: WorkflowCreateInput): WorkflowDefin
     slug,
     description: input.description?.trim() || null,
     schemaVersion: WORKFLOW_SCHEMA_VERSION,
-    sourceSchemaVersion: SOURCE_SCHEMA_VERSION,
     nodes: [
       { id: "start", type: "start", position: { x: 0, y: 0 }, data: { label: "Start" } },
       {
@@ -69,9 +67,6 @@ export function validateWorkflowDefinition(workflow: WorkflowDefinition): Workfl
   if (!workflow.slug?.trim()) errors.push("slug is required");
   if (workflow.schemaVersion !== WORKFLOW_SCHEMA_VERSION) {
     errors.push(`Unsupported workflow schemaVersion: ${workflow.schemaVersion}`);
-  }
-  if (workflow.sourceSchemaVersion !== SOURCE_SCHEMA_VERSION) {
-    errors.push(`Unsupported sourceSchemaVersion: ${workflow.sourceSchemaVersion}`);
   }
   if (workflow.nodes.length > WORKFLOW_MAX_NODES) {
     errors.push(`Workflow exceeds max node count: ${WORKFLOW_MAX_NODES}`);
