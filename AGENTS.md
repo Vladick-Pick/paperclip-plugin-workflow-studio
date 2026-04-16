@@ -83,6 +83,10 @@
   - `~/.paperclip/plugins/package.json`
   - `~/.paperclip/plugins/package-lock.json`
   - `~/.paperclip/plugins/node_modules/@vlbog/paperclip-plugin-workflow-studio/dist/manifest.js`
+- Current Paperclip server loader imports plugin manifests without cache busting.
+  If a package version changes at the same manifest path, the running process can
+  keep validating an older manifest from module cache until `paperclip.service`
+  is restarted.
 - On the deployed server, `paperclip.service` runs with `Restart=always`. If plugin cache is correct but the running process is stale, restarting the service is a valid operational fix.
 
 ## Repository Rules

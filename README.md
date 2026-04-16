@@ -120,6 +120,13 @@ curl -X POST http://127.0.0.1:3100/api/plugins/<plugin-id>/upgrade \
 
 Paperclip resolves the new npm version, validates the manifest, and updates the existing installed plugin record. If the new version requests additional capabilities, the upgrade is blocked until that escalation is approved.
 
+## Install Troubleshooting
+
+If Plugin Manager keeps showing an old manifest-related install error after a new
+package version is already present in `~/.paperclip/plugins/node_modules`, the
+running Paperclip server process may still be holding an older plugin manifest
+in module cache. Restart `paperclip.service` and retry the install.
+
 ## Build Options
 
 - `pnpm build` uses esbuild presets from `@paperclipai/plugin-sdk/bundlers`.
