@@ -8,6 +8,11 @@ Visual workflow editor that publishes Paperclip Company Skills
 - pnpm 9+
 - Paperclip `v2026.416.0` or newer
 
+Current Paperclip server builds can report host version `0.0.0` during plugin
+install validation. Because of that, the plugin manifest does not currently
+enforce a minimum host version, even though the recommended baseline remains
+Paperclip `v2026.416.0` or newer.
+
 ## Scaffold a New Plugin Repo
 
 If you want to generate a fresh standalone Paperclip plugin from the official scaffolder:
@@ -89,7 +94,7 @@ You can also install a specific published version through the API:
 ```bash
 curl -X POST http://127.0.0.1:3100/api/plugins/install \
   -H "Content-Type: application/json" \
-  -d '{"packageName":"@vlbog/paperclip-plugin-workflow-studio","version":"0.1.1"}'
+  -d '{"packageName":"@vlbog/paperclip-plugin-workflow-studio","version":"0.1.2"}'
 ```
 
 ## Manual Smoke Test
@@ -110,7 +115,7 @@ curl -X POST http://127.0.0.1:3100/api/plugins/install \
 ```bash
 curl -X POST http://127.0.0.1:3100/api/plugins/<plugin-id>/upgrade \
   -H "Content-Type: application/json" \
-  -d '{"version":"0.1.1"}'
+  -d '{"version":"0.1.2"}'
 ```
 
 Paperclip resolves the new npm version, validates the manifest, and updates the existing installed plugin record. If the new version requests additional capabilities, the upgrade is blocked until that escalation is approved.

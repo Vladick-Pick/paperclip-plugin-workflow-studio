@@ -3,12 +3,11 @@ import type { PaperclipPluginManifestV1 } from "@paperclipai/plugin-sdk";
 const manifest: PaperclipPluginManifestV1 = {
   id: "paperclip-plugin-workflow-studio",
   apiVersion: 1,
-  version: "0.1.1",
+  version: "0.1.2",
   displayName: "Workflow Studio",
   description: "Visual workflow editor that publishes Paperclip Company Skills",
   author: "NoHum",
   categories: ["workspace", "ui"],
-  minimumPaperclipVersion: "2026.416.0",
   capabilities: [
     "plugin.state.read",
     "plugin.state.write",
