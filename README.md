@@ -16,6 +16,25 @@ If you want to generate a fresh standalone Paperclip plugin from the official sc
 npx @paperclipai/create-paperclip-plugin@2026.416.0 my-plugin
 ```
 
+## Publish to npm
+
+The package name for Plugin Manager install is:
+
+```bash
+paperclip-plugin-workflow-studio
+```
+
+Publish flow:
+
+```bash
+npm login
+pnpm install
+pnpm test
+pnpm typecheck
+pnpm pack:check
+pnpm publish --access public --no-git-checks
+```
+
 ## Install Dependencies
 
 ```bash
@@ -57,6 +76,22 @@ curl -X POST http://127.0.0.1:3100/api/plugins/install \
 
 After installation, open the active company in Paperclip and launch `Workflow Studio` from the plugin launcher.
 
+## Install From Plugin Manager
+
+In Paperclip `Plugin Manager -> Install Plugin`, enter:
+
+```text
+paperclip-plugin-workflow-studio
+```
+
+You can also install a specific published version through the API:
+
+```bash
+curl -X POST http://127.0.0.1:3100/api/plugins/install \
+  -H "Content-Type: application/json" \
+  -d '{"packageName":"paperclip-plugin-workflow-studio","version":"0.1.0"}'
+```
+
 ## Manual Smoke Test
 
 1. Create a workflow.
@@ -65,6 +100,20 @@ After installation, open the active company in Paperclip and launch `Workflow St
 4. Verify the preview updates.
 5. Publish to Company Skills.
 6. Open the created skill from the publish panel.
+
+## Update an Installed Plugin
+
+1. Bump the package version.
+2. Publish the new npm version.
+3. Upgrade the installed plugin:
+
+```bash
+curl -X POST http://127.0.0.1:3100/api/plugins/<plugin-id>/upgrade \
+  -H "Content-Type: application/json" \
+  -d '{"version":"0.1.1"}'
+```
+
+Paperclip resolves the new npm version, validates the manifest, and updates the existing installed plugin record. If the new version requests additional capabilities, the upgrade is blocked until that escalation is approved.
 
 ## Build Options
 

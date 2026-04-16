@@ -2,13 +2,15 @@
   "name": "paperclip-plugin-workflow-studio",
   "version": "0.1.0",
   "type": "module",
-  "private": true,
+  "private": false,
   "description": "Visual workflow editor that publishes Paperclip Company Skills",
   "scripts": {
     "build": "node ./esbuild.config.mjs",
     "build:rollup": "rollup -c",
     "dev": "node ./esbuild.config.mjs --watch",
     "dev:ui": "paperclip-plugin-dev-server --root . --ui-dir dist/ui --port 4177",
+    "pack:check": "npm pack --dry-run",
+    "prepack": "pnpm build",
     "test": "vitest run --config ./vitest.config.ts",
     "typecheck": "tsc --noEmit"
   },
@@ -24,6 +26,18 @@
   ],
   "author": "NoHum",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Vladick-Pick/paperclip-plugin-workflow-studio.git"
+  },
+  "homepage": "https://github.com/Vladick-Pick/paperclip-plugin-workflow-studio",
+  "bugs": {
+    "url": "https://github.com/Vladick-Pick/paperclip-plugin-workflow-studio/issues"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "devDependencies": {
     "@paperclipai/shared": "2026.416.0",
     "@paperclipai/plugin-sdk": "2026.416.0",
