@@ -3,7 +3,7 @@ import type { PaperclipPluginManifestV1 } from "@paperclipai/plugin-sdk";
 const manifest: PaperclipPluginManifestV1 = {
   id: "paperclip-plugin-workflow-studio",
   apiVersion: 1,
-  version: "0.1.2",
+  version: "0.1.3",
   displayName: "Workflow Studio",
   description: "Visual workflow editor that publishes Paperclip Company Skills",
   author: "NoHum",
@@ -11,6 +11,7 @@ const manifest: PaperclipPluginManifestV1 = {
   capabilities: [
     "plugin.state.read",
     "plugin.state.write",
+    "ui.sidebar.register",
     "ui.page.register",
     "ui.action.register"
   ],
@@ -20,6 +21,12 @@ const manifest: PaperclipPluginManifestV1 = {
   },
   ui: {
     slots: [
+      {
+        type: "sidebar",
+        id: "workflow-studio-sidebar-link",
+        displayName: "Workflow Studio",
+        exportName: "WorkflowStudioSidebarLink"
+      },
       {
         type: "page",
         id: "workflow-studio-page",

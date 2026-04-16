@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import {
   usePluginAction,
   usePluginData,
   type PluginPageProps,
+  type PluginSidebarProps,
 } from "@paperclipai/plugin-sdk/ui";
 import {
   WORKFLOW_NODE_TYPES,
@@ -25,13 +26,35 @@ type SkillFileDetail = {
   content: string;
 };
 
+const PAGE_ROUTE = "workflow-studio";
+
+export function WorkflowStudioSidebarLink({ context }: PluginSidebarProps) {
+  const href = workflowStudioPath(context.companyPrefix);
+  const isActive = typeof window !== "undefined"
+    && (window.location.pathname === href || window.location.pathname.startsWith(`${href}/`));
+
+  return (
+    <>
+      <WorkflowStudioStyles />
+      <a
+        href={href}
+        aria-current={isActive ? "page" : undefined}
+        className={`ws-sidebar-link ${isActive ? "is-active" : ""}`}
+      >
+        <WorkflowStudioGlyph className="ws-icon ws-icon-sm" />
+        <span className="ws-sidebar-link-label">Workflow Studio</span>
+      </a>
+    </>
+  );
+}
+
 export function WorkflowStudioPage({ context }: PluginPageProps) {
   const companyId = context.companyId;
 
   if (!companyId) {
     return (
       <Shell>
-        <Empty title="Select a company" body="Workflow Studio stores workflows per company." />
+        <Empty title="Select a company" body="Workflow Studio stores every graph in company-scoped plugin state." />
       </Shell>
     );
   }
@@ -44,6 +67,7 @@ function WorkflowStudio({ companyId, companyPrefix }: { companyId: string; compa
   const createWorkflow = usePluginAction("workflow.create");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const workflows = data?.workflows ?? [];
+  const selectedWorkflow = workflows.find((workflow) => workflow.id === selectedId) ?? null;
 
   useEffect(() => {
     if (!selectedId && workflows[0]) setSelectedId(workflows[0].id);
@@ -53,11 +77,11 @@ function WorkflowStudio({ companyId, companyPrefix }: { companyId: string; compa
   }, [selectedId, workflows]);
 
   async function handleCreate() {
-    const name = `Workflow ${workflows.length + 1}`;
+    const index = workflows.length + 1;
     const result = await createWorkflow({
       companyId,
-      name,
-      slug: `workflow-${workflows.length + 1}`,
+      name: `Workflow ${index}`,
+      slug: `workflow-${index}`,
       description: "Generated from Workflow Studio.",
     }) as { workflow: WorkflowDefinition };
     setSelectedId(result.workflow.id);
@@ -66,44 +90,67 @@ function WorkflowStudio({ companyId, companyPrefix }: { companyId: string; compa
 
   return (
     <Shell>
-      <header style={styles.header}>
-        <div>
-          <p style={styles.eyebrow}>Paperclip plugin</p>
-          <h1 style={styles.title}>Workflow Studio</h1>
-          <p style={styles.subtitle}>
-            Design schema-compatible workflows and publish them as company skills.
+      <header className="ws-header">
+        <div className="ws-header-copy">
+          <a className="ws-breadcrumb" href={pluginsHomePath(companyPrefix)}>
+            Plugins
+          </a>
+          <div className="ws-title-row">
+            <WorkflowStudioGlyph className="ws-icon ws-icon-md" />
+            <div className="ws-title-copy">
+              <p className="ws-kicker">Company workflow editor</p>
+              <h1 className="ws-title">Workflow Studio</h1>
+            </div>
+          </div>
+          <p className="ws-subtitle">
+            Build reusable workflow graphs and publish generated company skills without leaving Paperclip.
           </p>
         </div>
-        <button style={styles.primaryButton} onClick={() => void handleCreate()}>
-          New workflow
-        </button>
+        <div className="ws-header-tools">
+          <div className="ws-header-meta">
+            <span className="ws-count-pill">{workflows.length} workflows</span>
+            {selectedWorkflow ? <StatusBadge status={selectedWorkflow.publishState.status} /> : null}
+          </div>
+          <button className="ws-button ws-button-primary" onClick={() => void handleCreate()}>
+            New workflow
+          </button>
+        </div>
       </header>
 
-      {loading && <Empty title="Loading workflows" body="Reading company-scoped plugin state." />}
+      {loading && <Empty title="Loading workflows" body="Reading company-scoped workflow state." />}
       {error && <Empty title="Workflow bridge error" body={error.message} tone="danger" />}
 
       {!loading && !error && (
-        <div style={styles.layout}>
-          <aside style={styles.sidebar}>
-            <h2 style={styles.panelTitle}>Library</h2>
-            {workflows.length === 0 ? (
-              <Empty title="No workflows yet" body="Create a workflow to start building a reusable skill." />
-            ) : (
-              workflows.map((workflow) => (
-                <button
-                  key={workflow.id}
-                  style={{
-                    ...styles.workflowButton,
-                    ...(workflow.id === selectedId ? styles.workflowButtonActive : {}),
-                  }}
-                  onClick={() => setSelectedId(workflow.id)}
-                >
-                  <strong>{workflow.name}</strong>
-                  <span>{workflow.slug}</span>
-                  <StatusBadge status={workflow.publishState.status} />
-                </button>
-              ))
-            )}
+        <div className="ws-frame">
+          <aside className="ws-panel ws-library-panel">
+            <div className="ws-panel-head">
+              <div>
+                <p className="ws-section-kicker">Library</p>
+                <h2 className="ws-section-title">Company workflows</h2>
+              </div>
+            </div>
+            <div className="ws-library-scroll">
+              {workflows.length === 0 ? (
+                <Empty title="No workflows yet" body="Create the first workflow to start shaping a reusable company skill." compact />
+              ) : (
+                workflows.map((workflow) => (
+                  <button
+                    key={workflow.id}
+                    className={`ws-workflow-item ${workflow.id === selectedId ? "is-active" : ""}`}
+                    onClick={() => setSelectedId(workflow.id)}
+                  >
+                    <div className="ws-workflow-item-head">
+                      <strong>{workflow.name}</strong>
+                      <StatusBadge status={workflow.publishState.status} compact />
+                    </div>
+                    <span className="ws-workflow-slug">{workflow.slug}</span>
+                    <span className="ws-workflow-description">
+                      {workflow.description || "No description yet."}
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
           </aside>
 
           {selectedId ? (
@@ -116,8 +163,8 @@ function WorkflowStudio({ companyId, companyPrefix }: { companyId: string; compa
               }}
             />
           ) : (
-            <main style={styles.main}>
-              <Empty title="Nothing selected" body="Create or select a workflow." />
+            <main className="ws-content">
+              <Empty title="Nothing selected" body="Choose a workflow from the library or create a new one." />
             </main>
           )}
         </div>
@@ -156,8 +203,10 @@ function WorkflowEditor({
     if (!data?.workflow) return;
     const cloned = clone(data.workflow);
     setDraft(cloned);
-    setSelectedNodeId(cloned.nodes[0]?.id ?? null);
-  }, [data?.workflow.id]);
+    setSelectedNodeId((previous) => previous && cloned.nodes.some((node) => node.id === previous)
+      ? previous
+      : cloned.nodes[0]?.id ?? null);
+  }, [data?.workflow.id, data?.workflow.updatedAt]);
 
   const selectedNode = useMemo(
     () => draft?.nodes.find((node) => node.id === selectedNodeId) ?? null,
@@ -170,18 +219,19 @@ function WorkflowEditor({
   }, [selectedNode?.id]);
 
   if (loading) {
-    return <main style={styles.main}><Empty title="Loading workflow" body="Preparing preview." /></main>;
+    return <main className="ws-content"><Empty title="Loading workflow" body="Preparing graph and generated skill preview." /></main>;
   }
   if (error) {
-    return <main style={styles.main}><Empty title="Preview error" body={error.message} tone="danger" /></main>;
+    return <main className="ws-content"><Empty title="Preview error" body={error.message} tone="danger" /></main>;
   }
   if (!draft || !data) {
-    return <main style={styles.main}><Empty title="Workflow unavailable" body="Select another workflow or create a new one." /></main>;
+    return <main className="ws-content"><Empty title="Workflow unavailable" body="Select another workflow or create a new one." /></main>;
   }
 
   const currentDraft = draft;
   const currentData = data;
   const currentSelectedNode = selectedNode;
+  const canvasBounds = getCanvasBounds(currentDraft.nodes);
 
   async function saveDraft(nextDraft: WorkflowDefinition = currentDraft): Promise<WorkflowUpdateResult> {
     const result = await updateWorkflow({ companyId, workflow: nextDraft }) as WorkflowUpdateResult;
@@ -213,7 +263,7 @@ function WorkflowEditor({
     const node: WorkflowNode = {
       id: `${type}-${Date.now()}`,
       type,
-      position: { x: 80 + currentDraft.nodes.length * 60, y: 80 + currentDraft.nodes.length * 24 },
+      position: { x: 72 + currentDraft.nodes.length * 48, y: 64 + currentDraft.nodes.length * 28 },
       data: defaultNodeData(type),
     };
     updateDraft({ nodes: [...currentDraft.nodes, node] });
@@ -304,154 +354,186 @@ function WorkflowEditor({
     : null;
 
   return (
-    <main style={styles.main}>
-      <section style={styles.editorHeader}>
-        <div style={styles.fieldGrid}>
-          <label style={styles.label}>
-            Name
-            <input style={styles.input} value={currentDraft.name} onChange={(event) => updateDraft({ name: event.target.value })} />
+    <main className="ws-content">
+      <section className="ws-panel ws-summary-panel">
+        <div className="ws-panel-head">
+          <div>
+            <p className="ws-section-kicker">Definition</p>
+            <h2 className="ws-section-title">{currentDraft.name}</h2>
+            <p className="ws-panel-copy">Keep the graph and generated skill artifact in sync before publishing.</p>
+          </div>
+          <div className="ws-panel-actions">
+            <button className="ws-button" onClick={() => void saveDraft()}>Save</button>
+            <button className="ws-button ws-button-danger" onClick={() => void handleDelete()}>Delete</button>
+          </div>
+        </div>
+        <div className="ws-metadata-grid">
+          <label className="ws-field">
+            <span>Name</span>
+            <input className="ws-input" value={currentDraft.name} onChange={(event) => updateDraft({ name: event.target.value })} />
           </label>
-          <label style={styles.label}>
-            Slug
-            <input style={styles.input} value={currentDraft.slug} onChange={(event) => updateDraft({ slug: event.target.value })} />
+          <label className="ws-field">
+            <span>Slug</span>
+            <input className="ws-input" value={currentDraft.slug} onChange={(event) => updateDraft({ slug: event.target.value })} />
           </label>
-          <label style={styles.labelWide}>
-            Description
+          <label className="ws-field ws-field-wide">
+            <span>Description</span>
             <input
-              style={styles.input}
+              className="ws-input"
               value={currentDraft.description ?? ""}
               onChange={(event) => updateDraft({ description: event.target.value || null })}
             />
           </label>
         </div>
-        <div style={styles.actions}>
-          <button style={styles.secondaryButton} onClick={() => void saveDraft()}>Save</button>
-          <button style={styles.dangerButton} onClick={() => void handleDelete()}>Delete</button>
-        </div>
       </section>
 
-      <section style={styles.editorGrid}>
-        <div style={styles.canvasPanel}>
-          <div style={styles.nodeToolbar}>
-            <span style={styles.panelTitle}>Graph</span>
-            <select style={styles.select} onChange={(event) => addNode(event.target.value as WorkflowNodeType)} value="">
-              <option value="" disabled>Add node...</option>
-              {WORKFLOW_NODE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
-            </select>
-          </div>
-          <div style={styles.canvas}>
-            <svg style={styles.edgesSvg} aria-hidden="true">
-              {currentDraft.edges.map((edge) => {
-                const source = currentDraft.nodes.find((node) => node.id === edge.source);
-                const target = currentDraft.nodes.find((node) => node.id === edge.target);
-                if (!source || !target) return null;
-                return (
-                  <line
-                    key={edge.id}
-                    x1={source.position.x + 110}
-                    y1={source.position.y + 36}
-                    x2={target.position.x + 8}
-                    y2={target.position.y + 36}
-                    stroke="#7c8fb4"
-                    strokeWidth="2"
-                    strokeDasharray="6 6"
-                  />
-                );
-              })}
-            </svg>
-            {currentDraft.nodes.map((node) => (
-              <button
-                key={node.id}
-                style={{
-                  ...styles.nodeCard,
-                  left: node.position.x,
-                  top: node.position.y,
-                  ...(node.id === selectedNodeId ? styles.nodeCardActive : {}),
-                }}
-                onClick={() => setSelectedNodeId(node.id)}
-              >
-                <span style={styles.nodeType}>{node.type}</span>
-                <strong>{node.data.label as string ?? node.data.description as string ?? node.id}</strong>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div style={styles.inspectorPanel}>
-          <h2 style={styles.panelTitle}>Inspector</h2>
-          {currentSelectedNode ? (
-            <>
-              <p style={styles.muted}>Selected: <code>{currentSelectedNode.id}</code></p>
-              <textarea
-                style={styles.codeArea}
-                value={nodeJson}
-                onChange={(event) => setNodeJson(event.target.value)}
-                spellCheck={false}
-              />
-              {nodeJsonError && <p style={styles.error}>{nodeJsonError}</p>}
-              <div style={styles.actions}>
-                <button style={styles.secondaryButton} onClick={applyNodeJson}>Apply JSON</button>
-                <button style={styles.secondaryButton} onClick={connectToEnd}>Connect to End</button>
-                <button style={styles.dangerButton} onClick={removeSelectedNode}>Remove</button>
+      <div className="ws-workspace">
+        <div className="ws-main-column">
+          <section className="ws-panel">
+            <div className="ws-panel-head">
+              <div>
+                <p className="ws-section-kicker">Graph</p>
+                <h2 className="ws-section-title">Workflow map</h2>
               </div>
-            </>
-          ) : (
-            <Empty title="No node selected" body="Select a graph node to edit its data." />
-          )}
-        </div>
-      </section>
+              <div className="ws-node-toolbar">
+                <select className="ws-select" onChange={(event) => addNode(event.target.value as WorkflowNodeType)} value="">
+                  <option value="" disabled>Add node...</option>
+                  {WORKFLOW_NODE_TYPES.map((type) => <option key={type} value={type}>{type}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="ws-canvas">
+              <div className="ws-canvas-stage" style={{ width: canvasBounds.width, height: canvasBounds.height }}>
+                <svg className="ws-edges" viewBox={`0 0 ${canvasBounds.width} ${canvasBounds.height}`} aria-hidden="true">
+                  {currentDraft.edges.map((edge) => {
+                    const source = currentDraft.nodes.find((node) => node.id === edge.source);
+                    const target = currentDraft.nodes.find((node) => node.id === edge.target);
+                    if (!source || !target) return null;
+                    return (
+                      <line
+                        key={edge.id}
+                        x1={source.position.x + 184}
+                        y1={source.position.y + 44}
+                        x2={target.position.x}
+                        y2={target.position.y + 44}
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeDasharray="6 6"
+                        opacity="0.5"
+                      />
+                    );
+                  })}
+                </svg>
+                {currentDraft.nodes.map((node) => (
+                  <button
+                    key={node.id}
+                    className={`ws-node-card ${node.id === selectedNodeId ? "is-active" : ""}`}
+                    style={{ left: node.position.x, top: node.position.y }}
+                    onClick={() => setSelectedNodeId(node.id)}
+                  >
+                    <span className="ws-node-type">{node.type}</span>
+                    <strong>{stringValue(node.data.label) ?? stringValue(node.data.description) ?? node.id}</strong>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
 
-      <section style={styles.editorGrid}>
-        <div style={styles.inspectorPanel}>
-          <h2 style={styles.panelTitle}>Structured overrides</h2>
-          <label style={styles.label}>
-            Intro
-            <textarea
-              style={styles.textArea}
-              value={currentDraft.structuredOverrides.introOverride ?? ""}
-              onChange={(event) => updateOverrides("introOverride", event.target.value)}
-            />
-          </label>
-          <label style={styles.label}>
-            Constraints
-            <textarea
-              style={styles.textArea}
-              value={currentDraft.structuredOverrides.constraintsOverride ?? ""}
-              onChange={(event) => updateOverrides("constraintsOverride", event.target.value)}
-            />
-          </label>
-          <label style={styles.label}>
-            Notes
-            <textarea
-              style={styles.textArea}
-              value={currentDraft.structuredOverrides.notesOverride ?? ""}
-              onChange={(event) => updateOverrides("notesOverride", event.target.value)}
-            />
-          </label>
+          <section className="ws-panel">
+            <div className="ws-panel-head">
+              <div>
+                <p className="ws-section-kicker">Compiler overrides</p>
+                <h2 className="ws-section-title">Structured guidance</h2>
+              </div>
+            </div>
+            <div className="ws-form-stack">
+              <label className="ws-field">
+                <span>Intro</span>
+                <textarea
+                  className="ws-textarea"
+                  value={currentDraft.structuredOverrides.introOverride ?? ""}
+                  onChange={(event) => updateOverrides("introOverride", event.target.value)}
+                />
+              </label>
+              <label className="ws-field">
+                <span>Constraints</span>
+                <textarea
+                  className="ws-textarea"
+                  value={currentDraft.structuredOverrides.constraintsOverride ?? ""}
+                  onChange={(event) => updateOverrides("constraintsOverride", event.target.value)}
+                />
+              </label>
+              <label className="ws-field">
+                <span>Notes</span>
+                <textarea
+                  className="ws-textarea"
+                  value={currentDraft.structuredOverrides.notesOverride ?? ""}
+                  onChange={(event) => updateOverrides("notesOverride", event.target.value)}
+                />
+              </label>
+            </div>
+          </section>
         </div>
 
-        <div style={styles.previewPanel}>
-          <div style={styles.previewHeader}>
-            <h2 style={styles.panelTitle}>Preview and publish</h2>
-            <StatusBadge status={currentDraft.publishState.status} />
-          </div>
-          <pre style={styles.preview}>{currentData.artifact.skillMarkdown}</pre>
-          <details>
-            <summary>references/workflow-map.md</summary>
-            <pre style={styles.preview}>{currentData.artifact.referenceMarkdown}</pre>
-          </details>
-          <label style={styles.checkboxLabel}>
-            <input type="checkbox" checked={forceRepublish} onChange={(event) => setForceRepublish(event.target.checked)} />
-            Force republish if the CompanySkill changed outside Workflow Studio
-          </label>
-          <div style={styles.actions}>
-            <button style={styles.primaryButton} onClick={() => void handlePublish()}>Publish to Company Skills</button>
-            {skillLink && <a style={styles.linkButton} href={skillLink}>Open skill</a>}
-          </div>
-          {publishMessage && <p style={styles.success}>{publishMessage}</p>}
-          {publishError && <p style={styles.error}>{publishError}</p>}
+        <div className="ws-side-column">
+          <section className="ws-panel">
+            <div className="ws-panel-head">
+              <div>
+                <p className="ws-section-kicker">Inspector</p>
+                <h2 className="ws-section-title">{currentSelectedNode ? currentSelectedNode.type : "No node selected"}</h2>
+              </div>
+            </div>
+            {currentSelectedNode ? (
+              <>
+                <p className="ws-panel-copy">
+                  Editing <code>{currentSelectedNode.id}</code>
+                </p>
+                <textarea
+                  className="ws-textarea ws-code"
+                  value={nodeJson}
+                  onChange={(event) => setNodeJson(event.target.value)}
+                  spellCheck={false}
+                />
+                {nodeJsonError ? <p className="ws-message ws-message-error">{nodeJsonError}</p> : null}
+                <div className="ws-inline-actions">
+                  <button className="ws-button" onClick={applyNodeJson}>Apply JSON</button>
+                  <button className="ws-button" onClick={connectToEnd}>Connect to End</button>
+                  <button className="ws-button ws-button-danger" onClick={removeSelectedNode}>Remove</button>
+                </div>
+              </>
+            ) : (
+              <Empty title="No node selected" body="Choose a node from the graph to edit its data payload." compact />
+            )}
+          </section>
+
+          <section className="ws-panel">
+            <div className="ws-panel-head">
+              <div>
+                <p className="ws-section-kicker">Preview</p>
+                <h2 className="ws-section-title">Generated skill output</h2>
+              </div>
+              <StatusBadge status={currentDraft.publishState.status} />
+            </div>
+            <pre className="ws-preview">{currentData.artifact.skillMarkdown}</pre>
+            <details className="ws-details">
+              <summary>references/workflow-map.md</summary>
+              <pre className="ws-preview">{currentData.artifact.referenceMarkdown}</pre>
+            </details>
+            <label className="ws-checkbox">
+              <input type="checkbox" checked={forceRepublish} onChange={(event) => setForceRepublish(event.target.checked)} />
+              <span>Force republish if the CompanySkill changed outside Workflow Studio.</span>
+            </label>
+            <div className="ws-inline-actions">
+              <button className="ws-button ws-button-primary" onClick={() => void handlePublish()}>
+                Publish to Company Skills
+              </button>
+              {skillLink ? <a className="ws-button" href={skillLink}>Open skill</a> : null}
+            </div>
+            {publishMessage ? <p className="ws-message ws-message-success">{publishMessage}</p> : null}
+            {publishError ? <p className="ws-message ws-message-error">{publishError}</p> : null}
+          </section>
         </div>
-      </section>
+      </div>
     </main>
   );
 }
@@ -562,170 +644,630 @@ function defaultNodeData(type: WorkflowNodeType): Record<string, unknown> {
   }
 }
 
-function StatusBadge({ status }: { status: string }) {
-  return <span style={styles.statusBadge}>{status}</span>;
-}
-
-function Shell({ children }: { children: React.ReactNode }) {
-  return <div style={styles.shell}>{children}</div>;
-}
-
-function Empty({ title, body, tone }: { title: string; body: string; tone?: "danger" }) {
+function StatusBadge({ status, compact = false }: { status: string; compact?: boolean }) {
   return (
-    <div style={{ ...styles.empty, ...(tone === "danger" ? styles.emptyDanger : {}) }}>
+    <span className={`ws-status ${statusClassName(status)} ${compact ? "is-compact" : ""}`}>
+      {status.replace(/_/g, " ")}
+    </span>
+  );
+}
+
+function Shell({ children }: { children: ReactNode }) {
+  return (
+    <>
+      <WorkflowStudioStyles />
+      <div className="ws-shell">{children}</div>
+    </>
+  );
+}
+
+function Empty({
+  title,
+  body,
+  tone,
+  compact = false,
+}: {
+  title: string;
+  body: string;
+  tone?: "danger";
+  compact?: boolean;
+}) {
+  return (
+    <div className={`ws-empty ${tone === "danger" ? "is-danger" : ""} ${compact ? "is-compact" : ""}`}>
       <strong>{title}</strong>
       <p>{body}</p>
     </div>
   );
 }
 
+function WorkflowStudioGlyph({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="6" cy="6" r="2.5" />
+      <circle cx="18" cy="6" r="2.5" />
+      <circle cx="12" cy="18" r="2.5" />
+      <path d="M8.2 7.1 10.8 15" />
+      <path d="M15.8 7.1 13.2 15" />
+      <path d="M8.5 6h7" />
+    </svg>
+  );
+}
+
+function WorkflowStudioStyles() {
+  return <style>{WORKFLOW_STUDIO_CSS}</style>;
+}
+
+function workflowStudioPath(companyPrefix: string | null): string {
+  return companyPrefix ? `/${companyPrefix}/${PAGE_ROUTE}` : `/plugins/paperclip-plugin-workflow-studio`;
+}
+
+function pluginsHomePath(companyPrefix: string | null): string {
+  return companyPrefix ? `/${companyPrefix}/plugins` : "/plugins";
+}
+
+function statusClassName(status: string): string {
+  switch (status) {
+    case "published":
+      return "is-published";
+    case "dirty":
+      return "is-dirty";
+    case "external_drift":
+      return "is-drift";
+    case "publish_error":
+      return "is-error";
+    default:
+      return "is-unpublished";
+  }
+}
+
+function stringValue(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+function getCanvasBounds(nodes: WorkflowNode[]): CSSProperties {
+  const maxX = Math.max(420, ...nodes.map((node) => node.position.x));
+  const maxY = Math.max(220, ...nodes.map((node) => node.position.y));
+  return {
+    width: maxX + 260,
+    height: maxY + 180,
+  };
+}
+
 function clone<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
-const styles: Record<string, React.CSSProperties> = {
-  shell: {
-    minHeight: "100%",
-    padding: 24,
-    color: "#172033",
-    background: "linear-gradient(135deg, #f6f2e8 0%, #eef4ff 52%, #f8fbff 100%)",
-    fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-  },
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 20,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  eyebrow: { margin: 0, textTransform: "uppercase", letterSpacing: 1.8, color: "#59708f", fontSize: 12 },
-  title: { margin: 0, fontSize: 34, letterSpacing: -1.2 },
-  subtitle: { margin: "6px 0 0", color: "#52647d" },
-  layout: { display: "grid", gridTemplateColumns: "280px minmax(0, 1fr)", gap: 18 },
-  sidebar: panelStyle(),
-  main: { display: "grid", gap: 18 },
-  panelTitle: { margin: 0, fontSize: 16, fontWeight: 800 },
-  workflowButton: {
-    width: "100%",
-    border: "1px solid #d7e0ee",
-    borderRadius: 16,
-    background: "rgba(255,255,255,0.72)",
-    display: "grid",
-    gap: 6,
-    padding: 14,
-    textAlign: "left",
-    color: "#172033",
-    marginTop: 10,
-    cursor: "pointer",
-  },
-  workflowButtonActive: { borderColor: "#2f6df6", boxShadow: "0 0 0 3px rgba(47,109,246,0.12)" },
-  statusBadge: {
-    display: "inline-flex",
-    width: "fit-content",
-    borderRadius: 999,
-    padding: "3px 8px",
-    background: "#172033",
-    color: "#fff",
-    fontSize: 11,
-    fontWeight: 700,
-  },
-  editorHeader: { ...panelStyle(), display: "flex", justifyContent: "space-between", gap: 16 },
-  fieldGrid: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, flex: 1 },
-  label: { display: "grid", gap: 6, fontSize: 12, color: "#52647d", fontWeight: 700 },
-  labelWide: { display: "grid", gap: 6, fontSize: 12, color: "#52647d", fontWeight: 700, gridColumn: "1 / -1" },
-  input: inputStyle(),
-  select: inputStyle(),
-  textArea: { ...inputStyle(), minHeight: 88, resize: "vertical" },
-  codeArea: {
-    ...inputStyle(),
-    minHeight: 260,
-    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-    resize: "vertical",
-  },
-  actions: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" },
-  primaryButton: buttonStyle("#2f6df6", "#fff"),
-  secondaryButton: buttonStyle("#edf3ff", "#172033"),
-  dangerButton: buttonStyle("#ffecec", "#9b1c1c"),
-  linkButton: { ...buttonStyle("#172033", "#fff"), textDecoration: "none" },
-  editorGrid: { display: "grid", gridTemplateColumns: "minmax(0, 1.35fr) minmax(320px, 0.65fr)", gap: 18 },
-  canvasPanel: panelStyle(),
-  inspectorPanel: panelStyle(),
-  previewPanel: panelStyle(),
-  nodeToolbar: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  canvas: {
-    position: "relative",
-    minHeight: 430,
-    overflow: "auto",
-    borderRadius: 18,
-    border: "1px solid #d7e0ee",
-    background: "radial-gradient(circle at 1px 1px, #d7e0ee 1px, transparent 0)",
-    backgroundSize: "22px 22px",
-  },
-  edgesSvg: { position: "absolute", inset: 0, width: 2200, height: 1000, pointerEvents: "none" },
-  nodeCard: {
-    position: "absolute",
-    width: 180,
-    minHeight: 76,
-    display: "grid",
-    gap: 4,
-    padding: 12,
-    borderRadius: 16,
-    border: "1px solid #cbd7e9",
-    background: "rgba(255,255,255,0.9)",
-    textAlign: "left",
-    cursor: "pointer",
-    boxShadow: "0 10px 25px rgba(23,32,51,0.08)",
-  },
-  nodeCardActive: { borderColor: "#2f6df6", boxShadow: "0 0 0 4px rgba(47,109,246,0.14)" },
-  nodeType: { color: "#2f6df6", fontSize: 11, textTransform: "uppercase", letterSpacing: 1 },
-  muted: { color: "#52647d" },
-  previewHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
-  preview: {
-    whiteSpace: "pre-wrap",
-    maxHeight: 360,
-    overflow: "auto",
-    background: "#101828",
-    color: "#e8eef8",
-    borderRadius: 14,
-    padding: 14,
-    fontSize: 12,
-  },
-  checkboxLabel: { display: "flex", alignItems: "center", gap: 8, margin: "12px 0", color: "#52647d", fontSize: 13 },
-  empty: { border: "1px dashed #cbd7e9", borderRadius: 16, padding: 16, color: "#52647d" },
-  emptyDanger: { borderColor: "#f4b7b7", color: "#9b1c1c", background: "#fff4f4" },
-  success: { color: "#146c43", fontWeight: 700 },
-  error: { color: "#9b1c1c", fontWeight: 700 },
-};
+const WORKFLOW_STUDIO_CSS = String.raw`
+  .ws-shell {
+    --ws-bg: var(--background, #090b0f);
+    --ws-card: color-mix(in srgb, var(--background, #090b0f) 90%, white 4%);
+    --ws-card-strong: color-mix(in srgb, var(--background, #090b0f) 84%, white 7%);
+    --ws-border: var(--border, rgba(255,255,255,0.12));
+    --ws-text: var(--foreground, #f4f7fb);
+    --ws-muted: var(--muted-foreground, rgba(255,255,255,0.64));
+    --ws-accent: #7ca2ff;
+    min-height: calc(100vh - 24px);
+    padding: 18px 24px 28px;
+    background: var(--ws-bg);
+    color: var(--ws-text);
+    box-sizing: border-box;
+  }
 
-function panelStyle(): React.CSSProperties {
-  return {
-    border: "1px solid rgba(149,164,190,0.35)",
-    borderRadius: 22,
-    background: "rgba(255,255,255,0.74)",
-    boxShadow: "0 18px 55px rgba(23,32,51,0.10)",
-    padding: 16,
-    backdropFilter: "blur(12px)",
-  };
-}
+  .ws-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 16px;
+    align-items: end;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--ws-border);
+  }
 
-function inputStyle(): React.CSSProperties {
-  return {
-    border: "1px solid #cbd7e9",
-    borderRadius: 12,
-    padding: "10px 12px",
-    background: "rgba(255,255,255,0.86)",
-    color: "#172033",
-  };
-}
+  .ws-header-copy {
+    display: grid;
+    gap: 12px;
+    min-width: 0;
+  }
 
-function buttonStyle(background: string, color: string): React.CSSProperties {
-  return {
-    border: "none",
-    borderRadius: 999,
-    padding: "10px 14px",
-    background,
-    color,
-    fontWeight: 800,
-    cursor: "pointer",
-  };
-}
+  .ws-breadcrumb {
+    width: fit-content;
+    color: var(--ws-muted);
+    font-size: 12px;
+    text-decoration: none;
+    transition: color 160ms ease;
+  }
+
+  .ws-breadcrumb:hover {
+    color: var(--ws-text);
+  }
+
+  .ws-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  .ws-title-copy {
+    min-width: 0;
+  }
+
+  .ws-kicker,
+  .ws-section-kicker {
+    margin: 0 0 4px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ws-muted);
+  }
+
+  .ws-title,
+  .ws-section-title {
+    margin: 0;
+    font-size: 28px;
+    line-height: 1.1;
+    font-weight: 650;
+    color: var(--ws-text);
+  }
+
+  .ws-section-title {
+    font-size: 20px;
+  }
+
+  .ws-subtitle,
+  .ws-panel-copy {
+    margin: 0;
+    max-width: 78ch;
+    color: var(--ws-muted);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .ws-header-tools,
+  .ws-header-meta,
+  .ws-panel-actions,
+  .ws-inline-actions,
+  .ws-node-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .ws-header-tools {
+    justify-content: flex-end;
+  }
+
+  .ws-count-pill,
+  .ws-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 28px;
+    padding: 0 10px;
+    border: 1px solid var(--ws-border);
+    border-radius: 999px;
+    font-size: 12px;
+    line-height: 1;
+    color: var(--ws-muted);
+    background: color-mix(in srgb, var(--ws-card) 86%, transparent);
+    white-space: nowrap;
+  }
+
+  .ws-status.is-compact {
+    min-height: 22px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  .ws-status.is-published {
+    color: #91efb1;
+    border-color: color-mix(in srgb, #16a34a 58%, var(--ws-border));
+    background: color-mix(in srgb, #16a34a 18%, transparent);
+  }
+
+  .ws-status.is-dirty {
+    color: #fde68a;
+    border-color: color-mix(in srgb, #d97706 58%, var(--ws-border));
+    background: color-mix(in srgb, #d97706 18%, transparent);
+  }
+
+  .ws-status.is-drift,
+  .ws-status.is-error {
+    color: #fca5a5;
+    border-color: color-mix(in srgb, #dc2626 58%, var(--ws-border));
+    background: color-mix(in srgb, #dc2626 18%, transparent);
+  }
+
+  .ws-status.is-unpublished {
+    color: var(--ws-muted);
+  }
+
+  .ws-frame {
+    display: grid;
+    grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
+    gap: 16px;
+    min-height: calc(100vh - 164px);
+    padding-top: 16px;
+  }
+
+  .ws-content,
+  .ws-main-column,
+  .ws-side-column,
+  .ws-form-stack {
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .ws-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .ws-panel {
+    display: grid;
+    gap: 14px;
+    min-width: 0;
+    border: 1px solid var(--ws-border);
+    border-radius: 8px;
+    background: var(--ws-card);
+    padding: 16px;
+    box-sizing: border-box;
+  }
+
+  .ws-library-panel {
+    grid-template-rows: auto minmax(0, 1fr);
+    min-height: 0;
+    padding-bottom: 0;
+  }
+
+  .ws-panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    min-width: 0;
+  }
+
+  .ws-library-scroll {
+    display: grid;
+    gap: 10px;
+    min-height: 0;
+    overflow: auto;
+    padding-bottom: 16px;
+  }
+
+  .ws-workflow-item,
+  .ws-node-card {
+    appearance: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .ws-workflow-item {
+    display: grid;
+    gap: 8px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--ws-border);
+    border-radius: 8px;
+    background: var(--ws-card-strong);
+    color: var(--ws-text);
+    transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+  }
+
+  .ws-workflow-item:hover,
+  .ws-node-card:hover,
+  .ws-button:hover,
+  .ws-sidebar-link:hover {
+    border-color: color-mix(in srgb, var(--ws-accent) 50%, var(--ws-border));
+  }
+
+  .ws-workflow-item.is-active,
+  .ws-node-card.is-active {
+    border-color: color-mix(in srgb, var(--ws-accent) 70%, var(--ws-border));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--ws-accent) 34%, transparent);
+  }
+
+  .ws-workflow-item-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .ws-workflow-slug,
+  .ws-workflow-description {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--ws-muted);
+  }
+
+  .ws-button,
+  .ws-input,
+  .ws-select,
+  .ws-textarea {
+    font: inherit;
+  }
+
+  .ws-button {
+    appearance: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid var(--ws-border);
+    background: transparent;
+    color: var(--ws-text);
+    text-decoration: none;
+    cursor: pointer;
+    transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+  }
+
+  .ws-button-primary {
+    border-color: var(--ws-text);
+    background: var(--ws-text);
+    color: var(--ws-bg);
+  }
+
+  .ws-button-primary:hover {
+    background: color-mix(in srgb, var(--ws-text) 92%, transparent);
+  }
+
+  .ws-button-danger {
+    color: #fca5a5;
+    border-color: color-mix(in srgb, #dc2626 58%, var(--ws-border));
+    background: color-mix(in srgb, #dc2626 15%, transparent);
+  }
+
+  .ws-metadata-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .ws-field {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+    font-size: 12px;
+    color: var(--ws-muted);
+  }
+
+  .ws-field-wide {
+    grid-column: 1 / -1;
+  }
+
+  .ws-input,
+  .ws-select,
+  .ws-textarea {
+    width: 100%;
+    border: 1px solid var(--ws-border);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--ws-card-strong) 86%, transparent);
+    color: var(--ws-text);
+    padding: 10px 12px;
+    box-sizing: border-box;
+    outline: none;
+  }
+
+  .ws-input:focus,
+  .ws-select:focus,
+  .ws-textarea:focus {
+    border-color: color-mix(in srgb, var(--ws-accent) 72%, var(--ws-border));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--ws-accent) 34%, transparent);
+  }
+
+  .ws-textarea {
+    min-height: 108px;
+    resize: vertical;
+  }
+
+  .ws-code {
+    min-height: 260px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+  }
+
+  .ws-canvas {
+    overflow: auto;
+    margin: 0 -16px -16px;
+    padding: 0;
+    border-top: 1px solid var(--ws-border);
+    background-image:
+      linear-gradient(to right, color-mix(in srgb, var(--ws-border) 26%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in srgb, var(--ws-border) 26%, transparent) 1px, transparent 1px);
+    background-size: 24px 24px;
+    height: clamp(340px, 42vh, 480px);
+  }
+
+  .ws-canvas-stage {
+    position: relative;
+    min-width: 100%;
+    min-height: 100%;
+  }
+
+  .ws-edges {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    color: var(--ws-muted);
+    pointer-events: none;
+  }
+
+  .ws-node-card {
+    position: absolute;
+    display: grid;
+    gap: 6px;
+    width: 184px;
+    min-height: 88px;
+    padding: 12px;
+    border: 1px solid var(--ws-border);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--ws-card) 88%, transparent);
+    color: var(--ws-text);
+    box-sizing: border-box;
+  }
+
+  .ws-node-type {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ws-accent);
+  }
+
+  .ws-preview {
+    margin: 0;
+    padding: 12px;
+    max-height: 320px;
+    overflow: auto;
+    border: 1px solid var(--ws-border);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--ws-bg) 86%, #111827 14%);
+    color: #dbe6ff;
+    white-space: pre-wrap;
+    font-size: 12px;
+    line-height: 1.55;
+    box-sizing: border-box;
+  }
+
+  .ws-details {
+    display: grid;
+    gap: 8px;
+  }
+
+  .ws-details summary {
+    cursor: pointer;
+    color: var(--ws-muted);
+    font-size: 12px;
+  }
+
+  .ws-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: var(--ws-muted);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .ws-checkbox input {
+    margin-top: 2px;
+  }
+
+  .ws-message {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .ws-message-success {
+    color: #91efb1;
+  }
+
+  .ws-message-error {
+    color: #fca5a5;
+  }
+
+  .ws-empty {
+    display: grid;
+    gap: 6px;
+    padding: 18px;
+    border: 1px dashed color-mix(in srgb, var(--ws-border) 82%, transparent);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--ws-card) 80%, transparent);
+    color: var(--ws-muted);
+  }
+
+  .ws-empty strong {
+    color: var(--ws-text);
+  }
+
+  .ws-empty p {
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .ws-empty.is-danger {
+    border-color: color-mix(in srgb, #dc2626 58%, var(--ws-border));
+    color: #fca5a5;
+  }
+
+  .ws-empty.is-compact {
+    padding: 14px;
+  }
+
+  .ws-sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 40px;
+    padding: 8px 12px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--ws-text);
+    text-decoration: none;
+    box-sizing: border-box;
+    transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+  }
+
+  .ws-sidebar-link.is-active {
+    border-color: var(--ws-border);
+    background: color-mix(in srgb, var(--ws-card) 90%, transparent);
+  }
+
+  .ws-sidebar-link-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ws-icon {
+    display: block;
+    flex: none;
+  }
+
+  .ws-icon-sm {
+    width: 16px;
+    height: 16px;
+  }
+
+  .ws-icon-md {
+    width: 18px;
+    height: 18px;
+    color: var(--ws-accent);
+  }
+
+  @media (max-width: 1360px) {
+    .ws-workspace {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 980px) {
+    .ws-shell {
+      padding: 16px;
+    }
+
+    .ws-header,
+    .ws-frame,
+    .ws-metadata-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .ws-header-tools {
+      justify-content: flex-start;
+    }
+
+    .ws-frame {
+      min-height: auto;
+    }
+  }
+`;

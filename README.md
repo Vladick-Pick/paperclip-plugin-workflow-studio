@@ -94,7 +94,7 @@ You can also install a specific published version through the API:
 ```bash
 curl -X POST http://127.0.0.1:3100/api/plugins/install \
   -H "Content-Type: application/json" \
-  -d '{"packageName":"@vlbog/paperclip-plugin-workflow-studio","version":"0.1.2"}'
+  -d '{"packageName":"@vlbog/paperclip-plugin-workflow-studio","version":"0.1.3"}'
 ```
 
 ## Manual Smoke Test
@@ -105,6 +105,7 @@ curl -X POST http://127.0.0.1:3100/api/plugins/install \
 4. Verify the preview updates.
 5. Publish to Company Skills.
 6. Open the created skill from the publish panel.
+7. Open `Workflow Studio` from the company sidebar entry and verify the page renders as a native company section.
 
 ## Update an Installed Plugin
 
@@ -115,7 +116,7 @@ curl -X POST http://127.0.0.1:3100/api/plugins/install \
 ```bash
 curl -X POST http://127.0.0.1:3100/api/plugins/<plugin-id>/upgrade \
   -H "Content-Type: application/json" \
-  -d '{"version":"0.1.2"}'
+  -d '{"version":"0.1.3"}'
 ```
 
 Paperclip resolves the new npm version, validates the manifest, and updates the existing installed plugin record. If the new version requests additional capabilities, the upgrade is blocked until that escalation is approved.
